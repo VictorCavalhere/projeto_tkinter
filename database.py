@@ -59,8 +59,12 @@ class DB:
         self.cur.execute("UPDATE capsula SET quantidade=? WHERE id_maquina_fk=?", (qtd,id_maq))
 
 
-    def delete(self, id):
-        self.cur.execute("DELETE FROM paciente WHERE id=?", (id,))
+    def delete(self, nome,nome2,num):
+        self.cur.execute("DELETE FROM cliente WHERE nome=?", (nome,))
+        self.conn.commit()
+        self.cur.execute("DELETE FROM operador WHERE nome=?", (nome2,))
+        self.conn.commit()
+        self.cur.execute("DELETE FROM maquina WHERE num_serie=?", (num,))
         self.conn.commit()
 
 
@@ -85,6 +89,11 @@ class DB:
         return rows
     
     def relatorio(self,num):
-        self.cur.execute("SELECT * FROM capsula WHERE id_maquina_fk=? order by quantidade desc",(num,))
+        self.cur.execute("SELECT * FROM capsula WHERE id_maquina_fk=? order by quantidade",(num,))
         rows = self.cur.fetchall()
+        return rows
+    
+    def num_maq(self,id):
+        self.cur.execute("SELECT num_serie FROM maquina WHERE id=?", (id,))
+        rows = self.cur.fetchone()
         return rows
