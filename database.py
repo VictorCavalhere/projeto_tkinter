@@ -8,7 +8,7 @@ class DB:
         self.cur.execute("CREATE TABLE IF NOT EXISTS operador (id INTEGER PRIMARY KEY,nome TEXT,hist_manutencao  DATETIME DEFAULT CURRENT_TIMESTAMP)")
         self.cur.execute("CREATE TABLE IF NOT EXISTS maquina (id INTEGER PRIMARY KEY, num_serie INTEGER, hist_op DATETIME DEFAULT CURRENT_TIMESTAMP, id_operador_fk INTEGER, id_cliente_fk INTEGER, FOREIGN KEY(id_operador_fk) REFERENCES operador(id),FOREIGN KEY(id_cliente_fk) REFERENCES cliente(id))")
         self.cur.execute("CREATE TABLE IF NOT EXISTS regiao (id INTEGER PRIMARY KEY,hist_atuacao DATETIME DEFAULT CURRENT_TIMESTAMP)")
-        self.cur.execute("CREATE TABLE IF NOT EXISTS capsula (quantidade INTEGER,hist_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP, id_maquina_fk INTEGER,FOREIGN KEY(id_maquina_fk) REFERENCES maquina(id))")
+        self.cur.execute("CREATE TABLE IF NOT EXISTS capsula (quantidade INTEGER,id_maquina_fk INTEGER,FOREIGN KEY(id_maquina_fk) REFERENCES maquina(id))")
 
 
         self.conn.commit()
@@ -16,13 +16,18 @@ class DB:
     def __del__(self):
         self.conn.close()
 
-    def view(self,nome):
-        self.cur.execute("SELECT nome FROM operador WHERE nome=?)",(nome))
+    def view(self):
+        self.cur.execute("SELECT o.nome,c.nome,m.num_serie FROM operador as O INNER JOIN cliente as C on c.data = o.hist_manutencao INNER JOIN maquina as M on m.hist_op = c.data")
+        rows = self.cur.fetchall()
+        return rows
+    
+    def relatorio (self):
+        self.cur.execute("SELECT o.nome,c.nome,m.num_serie FROM operador as O INNER JOIN cliente as C on c.data = o.hist_manutencao INNER JOIN maquina as M on m.hist_op = c.data")
         rows = self.cur.fetchall()
         return rows
 
     def view_capsula(self,num):
-        self.cur.execute("SELECT quantidade FROM capsula WHERE id_maquina_fk=?",(num,))
+        self.cur.execute("SELECT quantidade FROM capsula WHERE id_maquina_fk=? order by quantidade desc",(num,))
         rows = self.cur.fetchone()
         return rows
 
@@ -45,13 +50,13 @@ class DB:
         self.conn.commit()
 
 
-    def insert_capsula(self,qtd,data,id_maq):
-        self.cur.execute("INSERT INTO capsula VALUES (?,?,?)", (qtd,data,id_maq))
+    def insert_capsula(self,qtd,id_maq):
+        self.cur.execute("INSERT INTO capsula VALUES (?,?)", (qtd,id_maq))
         self.conn.commit()
 
     
-    def update_capsula(self, qtd, data,id_maq):
-        self.cur.execute("UPDATE capsula SET quantidade=? WHERE hist_atualizacao=? and id_maquina_fk=?", (qtd,data,id_maq))
+    def update_capsula(self, qtd,id_maq):
+        self.cur.execute("UPDATE capsula SET quantidade=? WHERE id_maquina_fk=?", (qtd,id_maq))
 
 
     def delete(self, id):
@@ -77,4 +82,9 @@ class DB:
     def select_id_maquina(self,numero):
         self.cur.execute("SELECT id FROM maquina WHERE num_serie=?", (numero,))
         rows = self.cur.fetchone()
+        return rows
+    
+    def relatorio(self,num):
+        self.cur.execute("SELECT * FROM capsula WHERE id_maquina_fk=? order by quantidade desc",(num,))
+        rows = self.cur.fetchall()
         return rows
